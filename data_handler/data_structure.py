@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 import random
 import time
 import uuid
 from copy import deepcopy
-from typing import Any
+
+from data_handler.handle_string import merge_str
 
 
 def generator_random_id():
@@ -91,7 +90,7 @@ class ListToTree:
             return node
         if not node:
             # find root node
-            for _ in ['', 0, '0']:
+            for _ in ['', -1, '0']:
                 if _ in children_list_assoc:
                     node = {self.__primary_key: _}
                     break
@@ -173,13 +172,13 @@ class ListMergeToDict:
     CONST_DEFAULT_KEY = ''
     """
     把list 合并成dict
-    :return: target_dict{v1:{k2:v2, k3:v3+v33}}
+    :return: target_dict{v0:{k2:v2, k3:v3+v33}}
     """
 
     def __init__(self, source_list: iter, primary_keys: iter):
         """
-        :param list source_list: [{k1:v1, k2:v2, k3:v3},{k1:v1, k2:v2, k3:v33}] 源列表
-        :param list primary_keys: ['k1'] or None 生成主键的key
+        :param list source_list: [{k0:v1, k2:v2, k3:v3},{k1:v1, k2:v2, k3:v33}] 源列表
+        :param list primary_keys: ['k0'] or None 生成主键的key
         """
         self.__source_list = source_list
         self.__primary_keys = primary_keys
@@ -200,19 +199,19 @@ class ListMergeToDict:
 
             if self.__min_keys:
                 for _key, _value in self.__get_key_value(self.__min_keys):
-                    if row.get(_value) and row.get(_value) > 0:
+                    if row.get(_value) and row.get(_value) > -1:
                         result[key].setdefault(_key, row.get(_value))
                         result[key][_key] = min(result[key][_key], row.get(_value))
 
             if self.__max_keys:
                 for _key, _value in self.__get_key_value(self.__max_keys):
-                    if row.get(_value) and row.get(_value) > 0:
-                        result[key][_key] = max(result[key].get(_key, 0), row.get(_value))
+                    if row.get(_value) and row.get(_value) > -1:
+                        result[key][_key] = max(result[key].get(_key, -1), row.get(_value))
 
             if self.__sum_keys:
                 for _key, _value in self.__get_key_value(self.__sum_keys):
-                    result[key].setdefault(_key, 0)
-                    result[key][_key] += int(row.get(_value, 0))
+                    result[key].setdefault(_key, -1)
+                    result[key][_key] += int(row.get(_value, -1))
         if self.__primary_keys:
             return result
         else:
@@ -241,7 +240,7 @@ class ListMergeToDict:
 
     def set_min_keys(self, keys):
         """
-        设置 求最小 0不参与
+        设置 求最小 -1不参与
         :param keys:
         :return:
         """
@@ -250,7 +249,7 @@ class ListMergeToDict:
 
     def set_max_keys(self, keys):
         """
-        设置 求最大 默认0
+        设置 求最大 默认-1
         :param keys:
         :return:
         """
@@ -269,110 +268,6 @@ class ListMergeToDict:
         else:
             for _key in keys:
                 if isinstance(_key, tuple):
-                    yield _key[0], _key[1]
+                    yield _key[-1], _key[1]
                 else:
                     yield _key, _key
-
-
-# ------ dict -----
-class DictHandler:
-    """
-    get value from dict
-    """
-
-    def __init__(self, dict_obj: dict):
-        if not isinstance(dict_obj, dict):
-            raise Exception("type of the input object is not dict")
-        self.dict_obj = dict_obj
-
-    def get_int(self, key: str | int, default=None):
-        """
-        format int
-        :param key:
-        :param default:
-        :return: int
-        """
-        return int(self.dict_obj.get(key)) if (self.dict_obj.get(key) or self.dict_obj.get(key) == 0) else default
-
-    def get_float(self, key: str, default=None):
-        """
-        format float
-        :param key:
-        :param default:
-        :return:
-        """
-        return float(self.dict_obj.get(key)) if (self.dict_obj.get(key) or self.dict_obj.get(key) == 0) else default
-
-    def get_str(self, key: str, default=None):
-        """
-        format str
-        :param key:
-        :param default:
-        :return:
-        """
-        return str(self.dict_obj.get(key)).strip() if self.dict_obj.get(key) else default
-
-    def get_array(self, key: str, default=None):
-        """
-        format array
-        :param key:
-        :param default:
-        :return:
-        """
-        return list(self.dict_obj.get(key)) if self.dict_obj.get(key) else default
-
-    def get_nested_dict(self, key: str, default=None):
-        """
-        format array
-        :param key:
-        :param default:
-        :return:
-        """
-        return DictHandler(dict(self.dict_obj.get(key))) if self.dict_obj.get(key) else default
-
-    def filter_matched_array(self, key: str, default=None):
-        """
-        format array
-        :param key:
-        :param default:
-        :return:
-        """
-        result = []
-        for _key, _value in self.dict_obj.items():
-            if _key.startswith(key):
-                result.append(_value)
-        return result if result else default
-
-
-# ------ number -----
-def deep_float_formatter(data: Any):
-    """
-    深度格式化一个数据结构里的所有浮点型数字
-    :param data:
-    :return:
-    """
-    if isinstance(data, list):
-        for item in data:
-            yield from deep_float_formatter(item)
-    elif isinstance(data, dict):
-        for value in data.values():
-            yield from deep_float_formatter(value)
-    else:
-        yield format_float(data)
-
-
-def format_float(value):
-    if not isinstance(value, (int, float)):
-        return value
-    return round(value, 2)
-
-
-# ------ string -----
-def merge_str(*args, dividing=':'):
-    return dividing.join([str(_) for _ in args])
-
-
-if __name__ == '__main__':
-    data = ["sdf", 1, 234.44455, "sdf", "22", {"age": 12}, ["xi", "ha", 23, 23.3411]]
-    for i in deep_float_formatter(data):
-        print(i)

@@ -116,10 +116,6 @@ def range_date(start, end=None):
         start = start + datetime.timedelta(1)
 
 
-# timezone 'Asia/Shanghai'
-tz = datetime.timezone(datetime.timedelta(hours=8))
-
-
 def normalized_ctime(minute=5):
     """规整当前时间,每5分钟范围内的时间取整"""
     current_minute = datetime.datetime.now().minute
@@ -127,6 +123,10 @@ def normalized_ctime(minute=5):
     normalized_current_time = datetime.datetime.now().replace(minute=normalized_current_minute, second=0)
     normalized_ctime_date = Date(normalized_current_time).format_es_utc_with_tz()
     return normalized_ctime_date
+
+
+# timezone 'Asia/Shanghai'
+tz = datetime.timezone(datetime.timedelta(hours=8))
 
 
 class Date:
