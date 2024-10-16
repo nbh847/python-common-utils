@@ -6,7 +6,7 @@ import os
 
 
 class FileUtils:
-    def __int__(self, file_path: str,  print_log: bool = True):
+    def __init__(self, file_path: str,  print_log: bool = True):
         """
         param file_path: 文件路径
         param print_log: 是否打印日志，默认是打印
